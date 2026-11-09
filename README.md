@@ -24,6 +24,10 @@ make dump            # read and decode all settings
 .venv/bin/python homidy.py alarm 0:off
 .venv/bin/python homidy.py focus 25              # focus timer, minutes
 .venv/bin/python homidy.py focus stop
+.venv/bin/python homidy.py schedule 19:00-23:00,ff8800 30  # add light window
+.venv/bin/python homidy.py schedule del:2        # remove entry 2
+.venv/bin/python homidy.py schedule clear        # remove all entries
+.venv/bin/python homidy.py schedule off          # on | off, all schedules
 .venv/bin/python homidy.py format 24             # 12 | 24
 .venv/bin/python homidy.py holiday on            # on | off
 .venv/bin/python homidy.py raw <hex>             # send any frame
@@ -98,8 +102,8 @@ BB 13 00 00 00 00 00 01 01 04 07 EA 0B 09 0A 32 3A 00 AA
 | `92` | `93` | Endurance mode | 00/01 | read works |
 | `94` | `95` | Alarm master switch | 00/01 | works |
 | `96` | `97` | Holiday mode | 00/01 | works |
-| `B0` | `B1` | Schedule master switch | 00/01 | read works |
-| `B2` | `B3` | Light schedules | 13 bytes each | read works |
+| `B0` | `B1` | Schedule master switch | 00/01 | works |
+| `B2` | `B3` | Light schedules | 13 bytes each | works |
 | `B4` | `B5` | Focus presets | 10 bytes each | read works |
 | `B6` | – | Start focus timer | 11 bytes | works |
 | `B7` | – | Stop focus timer | – | works |
@@ -147,6 +151,9 @@ state  days  start_h  start_m  end_h  end_m  sound  vol  mode  bright  R G B
 ```
 
 `state`: bit 0 = on, bit 1 = locked. Frame `len` = 12 + 13 × count.
+
+`B2` replaces the whole list. The light runs from start up to,
+but not including, the end minute. `sound` `ff` means no sound.
 
 ### Focus timer (`B6`, 11 bytes) and presets (`B4`/`B5`, 10 bytes each)
 

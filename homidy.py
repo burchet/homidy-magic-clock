@@ -51,13 +51,24 @@ SOUNDS = {
 }
 
 
+def light_mode(color):
+    # preset name or rrggbb
+    if color in LIGHT_MODES:
+        return LIGHT_MODES[color], bytes(3)
+    return 0x0A, bytes.fromhex(color.lstrip("#"))
+
+
 def light_frame(color, level):
     # mode, rgb, brightness 0-100
-    if color in LIGHT_MODES:
-        mode, rgb = LIGHT_MODES[color], bytes(3)
-    else:
-        mode, rgb = 0x0A, bytes.fromhex(color.lstrip("#"))
+    mode, rgb = light_mode(color)
     return frame(0x03, bytes([mode]) + rgb + bytes([level]))
+
+
+def schedule_entry(span, color="sunrise", bright=50, mask=0x7F):
+    # span = HH:MM-HH:MM, light only
+    (h1, m1), (h2, m2) = (map(int, t.split(":")) for t in span.split("-"))
+    mode, rgb = light_mode(color)
+    return bytes([1, mask, h1, m1, h2, m2, 0xFF, 50, mode, bright]) + rgb
 
 
 def parse(data):
@@ -136,7 +147,14 @@ async def run(args):
     if not dev:
         raise SystemExit("Clock not found")
     async with BleakClient(dev) as c:
-        await c.start_notify(CHR, lambda _, d: print("<", d.hex(), "|", parse(d)))
+        last = {}
+
+        def on_data(_, d):
+            print("<", d.hex(), "|", parse(d))
+            if len(d) >= 12:
+                last[d[9]] = bytes(d[10:-2])
+
+        await c.start_notify(CHR, on_data)
 
         async def send(data):
             print(">", data.hex())
@@ -172,6 +190,21 @@ async def run(args):
                 await send(frame(0xB7))
             else:
                 await send(focus_frame(int(args.arg)))
+        elif args.cmd == "schedule" and args.arg:
+            if args.arg in ("on", "off"):
+                await send(frame(0xB0, bytes([args.arg == "on"])))
+                await send(frame(0xB1))
+            else:
+                await send(frame(0xB3))
+                rows = chunks(last.get(0xB3, b""), 13)
+                if args.arg == "clear":
+                    rows = []
+                elif args.arg.startswith("del:"):
+                    rows.pop(int(args.arg[4:]) - 1)
+                else:
+                    span, _, color = args.arg.partition(",")
+                    rows.append(schedule_entry(span, color or "sunrise", args.level))
+                await send(frame(0xB2, b"".join(rows)))
         elif args.cmd == "format" and args.arg:
             await send(frame(0x09, bytes([args.arg == "24"])))
         elif args.cmd == "holiday" and args.arg:
@@ -188,11 +221,12 @@ async def run(args):
 
 def main():
     ap = argparse.ArgumentParser(description=__doc__)
-    ap.add_argument("cmd", choices=["sync", "raw", "dump", *GETTERS])
+    ap.add_argument("cmd", choices=["sync", "raw", "dump", "schedule", *GETTERS])
     ap.add_argument("arg", nargs="?", help=(
         "raw: hex frame; light: rrggbb|sunrise|loop|off; "
         "volume: sound name; screen: 1-7; alarm: slot:HH:MM|slot:off; "
-        "focus: minutes|stop; format: 12|24; holiday: on|off"))
+        "focus: minutes|stop; "
+        "schedule: on|off|clear|del:N|HH:MM-HH:MM[,rrggbb|sunrise|loop]; format: 12|24; holiday: on|off"))
     ap.add_argument("level", nargs="?", type=int, default=50,
                     help="brightness, volume 0-100, or alarm sunrise minutes")
     asyncio.run(run(ap.parse_args()))
