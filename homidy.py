@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Homidy Magical Goofy MG001 BLE client."""
+"""Homidy Magic Clock (MG001) BLE client."""
 import argparse
 import asyncio
 import datetime as dt

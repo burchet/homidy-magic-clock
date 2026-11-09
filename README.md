@@ -1,6 +1,6 @@
-# goofy-clock
+# homidy-magic-clock
 
-Control the **Homidy Magical Goofy MG001** sunrise alarm clock over Bluetooth LE
+Control the **Homidy Magic Clock (MG001)** sunrise alarm clock over Bluetooth LE
 from Python, without the vendor app. Includes NTP time sync and a documented
 protocol.
 
@@ -16,17 +16,17 @@ make dump            # read and decode all settings
 ```
 
 ```sh
-.venv/bin/python goofy.py light ff8800 40       # custom RGB, brightness 0-100
-.venv/bin/python goofy.py light sunrise 80      # sunrise | loop | off
-.venv/bin/python goofy.py volume rain 30        # play a sound, 0 stops
-.venv/bin/python goofy.py screen 3              # display brightness 1-7
-.venv/bin/python goofy.py alarm 0:06:45 15      # slot 0, 15 min sunrise lead
-.venv/bin/python goofy.py alarm 0:off
-.venv/bin/python goofy.py focus 25              # focus timer, minutes
-.venv/bin/python goofy.py focus stop
-.venv/bin/python goofy.py format 24             # 12 | 24
-.venv/bin/python goofy.py holiday on            # on | off
-.venv/bin/python goofy.py raw <hex>             # send any frame
+.venv/bin/python homidy.py light ff8800 40       # custom RGB, brightness 0-100
+.venv/bin/python homidy.py light sunrise 80      # sunrise | loop | off
+.venv/bin/python homidy.py volume rain 30        # play a sound, 0 stops
+.venv/bin/python homidy.py screen 3              # display brightness 1-7
+.venv/bin/python homidy.py alarm 0:06:45 15      # slot 0, 15 min sunrise lead
+.venv/bin/python homidy.py alarm 0:off
+.venv/bin/python homidy.py focus 25              # focus timer, minutes
+.venv/bin/python homidy.py focus stop
+.venv/bin/python homidy.py format 24             # 12 | 24
+.venv/bin/python homidy.py holiday on            # on | off
+.venv/bin/python homidy.py raw <hex>             # send any frame
 ```
 
 Any getter name works as a command too, e.g. `time`, `battery`, `version`,
@@ -41,7 +41,7 @@ Tested on macOS with firmware `MGL_S0.6.3`. Should work on Linux and Windows via
 
 | | |
 |---|---|
-| Advertised name | `MI Goofy GL-xxxx` (last 4 hex digits of the BLE address) |
+| Advertised BLE name | `MI Goofy GL-xxxx` (last 4 hex digits of the BLE address) |
 | Chip | JieLi (manufacturer data reads `JLAISDK`) |
 | Control channel | service `0000ae30-…`, characteristic `0000ae10-…` (write + notify) |
 | Pairing | none, no bonding, no key |

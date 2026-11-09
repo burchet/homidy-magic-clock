@@ -7,10 +7,10 @@ deps:
 	$(PY) -m pip install -q -r requirements.txt
 
 sync:
-	$(PY) goofy.py sync
+	$(PY) homidy.py sync
 
 dump:
-	$(PY) goofy.py dump
+	$(PY) homidy.py dump
 
 scan:
 	$(PY) scan.py
