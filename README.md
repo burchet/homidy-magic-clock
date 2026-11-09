@@ -25,6 +25,7 @@ make dump            # read and decode all settings
 .venv/bin/python homidy.py focus 25              # focus timer, minutes
 .venv/bin/python homidy.py focus stop
 .venv/bin/python homidy.py schedule 19:00-23:00,ff8800 30  # add light window
+.venv/bin/python homidy.py schedule 06:30-07:00,sunrise,bird:40 80  # with sound
 .venv/bin/python homidy.py schedule del:2        # remove entry 2
 .venv/bin/python homidy.py schedule clear        # remove all entries
 .venv/bin/python homidy.py schedule off          # on | off, all schedules
@@ -153,7 +154,8 @@ state  days  start_h  start_m  end_h  end_m  sound  vol  mode  bright  R G B
 `state`: bit 0 = on, bit 1 = locked. Frame `len` = 12 + 13 × count.
 
 `B2` replaces the whole list. The light runs from start up to,
-but not including, the end minute. `sound` `ff` means no sound.
+but not including, the end minute. The sound plays for the whole
+window; `sound` `ff` means no sound.
 
 ### Focus timer (`B6`, 11 bytes) and presets (`B4`/`B5`, 10 bytes each)
 

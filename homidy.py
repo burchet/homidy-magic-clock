@@ -64,11 +64,12 @@ def light_frame(color, level):
     return frame(0x03, bytes([mode]) + rgb + bytes([level]))
 
 
-def schedule_entry(span, color="sunrise", bright=50, mask=0x7F):
-    # span = HH:MM-HH:MM, light only
+def schedule_entry(span, color="sunrise", bright=50, sound="mute", vol=50, mask=0x7F):
+    # span = HH:MM-HH:MM, end exclusive
     (h1, m1), (h2, m2) = (map(int, t.split(":")) for t in span.split("-"))
     mode, rgb = light_mode(color)
-    return bytes([1, mask, h1, m1, h2, m2, 0xFF, 50, mode, bright]) + rgb
+    sid = int(SOUNDS.get(sound, sound), 16)
+    return bytes([1, mask, h1, m1, h2, m2, sid, vol, mode, bright]) + rgb
 
 
 def parse(data):
@@ -202,8 +203,11 @@ async def run(args):
                 elif args.arg.startswith("del:"):
                     rows.pop(int(args.arg[4:]) - 1)
                 else:
-                    span, _, color = args.arg.partition(",")
-                    rows.append(schedule_entry(span, color or "sunrise", args.level))
+                    # HH:MM-HH:MM[,color[,sound[:vol]]]
+                    span, color, sound = (args.arg.split(",") + ["", ""])[:3]
+                    sound, _, vol = sound.partition(":")
+                    rows.append(schedule_entry(span, color or "sunrise", args.level,
+                                               sound or "mute", int(vol or 50)))
                 await send(frame(0xB2, b"".join(rows)))
         elif args.cmd == "format" and args.arg:
             await send(frame(0x09, bytes([args.arg == "24"])))
@@ -226,7 +230,7 @@ def main():
         "raw: hex frame; light: rrggbb|sunrise|loop|off; "
         "volume: sound name; screen: 1-7; alarm: slot:HH:MM|slot:off; "
         "focus: minutes|stop; "
-        "schedule: on|off|clear|del:N|HH:MM-HH:MM[,rrggbb|sunrise|loop]; format: 12|24; holiday: on|off"))
+        "schedule: on|off|clear|del:N|HH:MM-HH:MM[,color[,sound[:vol]]]; format: 12|24; holiday: on|off"))
     ap.add_argument("level", nargs="?", type=int, default=50,
                     help="brightness, volume 0-100, or alarm sunrise minutes")
     asyncio.run(run(ap.parse_args()))
